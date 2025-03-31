@@ -1,4 +1,4 @@
-import json
+import sqlite3
 import random
 import time
 from faker import Faker
@@ -6,28 +6,31 @@ from faker import Faker
 fake = Faker()
 LOG_LEVELS = ["INFO", "WARNING", "ERROR", "DEBUG"]
 
+# Function to generate a log entry
 def generate_structured_log():
-    log_entry = {
+    return {
         "timestamp": fake.date_time().strftime("%Y-%m-%d %H:%M:%S"),
         "level": random.choice(LOG_LEVELS),
         "message": fake.sentence(),
         "user": fake.user_name()
     }
-    return json.dumps(log_entry)
 
-def generate_unstructured_log():
-    timestamp = fake.date_time().strftime("%Y-%m-%d %H:%M:%S")
-    level = random.choice(LOG_LEVELS)
-    message = fake.sentence()
-    return f"[{timestamp}] {level} - {message}"
+# Function to insert a log into the database
+def save_log_to_db(log_entry):
+    conn = sqlite3.connect("logs.db")
+    cursor = conn.cursor()
 
-def write_logs(filename="logs/sample.log", num_lines=10):
-    with open(filename, "w") as file:
-        for _ in range(num_lines):
-            log_type = random.choice(["structured", "unstructured"])
-            log_entry = generate_structured_log() if log_type == "structured" else generate_unstructured_log()
-            file.write(log_entry + "\n")
+    cursor.execute("""
+        INSERT INTO logs (timestamp, level, message, user)
+        VALUES (?, ?, ?, ?)
+    """, (log_entry["timestamp"], log_entry["level"], log_entry["message"], log_entry["user"]))
 
+    conn.commit()
+    conn.close()
+
+# Generate and store 5 logs for testing
 if __name__ == "__main__":
-    write_logs()
-    print("✅ Sample logs generated!")
+    for _ in range(5):
+        log = generate_structured_log()
+        save_log_to_db(log)
+        print("✅ Log saved:", log)
