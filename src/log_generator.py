@@ -17,16 +17,19 @@ def generate_structured_log():
 
 # Function to insert a log into the database
 def save_log_to_db(log_entry):
-    conn = sqlite3.connect("logs.db")
-    cursor = conn.cursor()
+    try:
+        conn = sqlite3.connect("logs.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO logs (timestamp, level, message, user)
+            VALUES (?, ?, ?, ?)
+        """, (log_entry["timestamp"], log_entry["level"], log_entry["message"], log_entry["user"]))
+        conn.commit()
+    except sqlite3.Error as e:
+        print("❌ Database error:", e)
+    finally:
+        conn.close()
 
-    cursor.execute("""
-        INSERT INTO logs (timestamp, level, message, user)
-        VALUES (?, ?, ?, ?)
-    """, (log_entry["timestamp"], log_entry["level"], log_entry["message"], log_entry["user"]))
-
-    conn.commit()
-    conn.close()
 
 # Generate and store 5 logs for testing
 if __name__ == "__main__":
