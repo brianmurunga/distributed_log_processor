@@ -1,48 +1,16 @@
-import sqlite3
 import matplotlib.pyplot as plt
 from collections import Counter
-import datetime
 
-def fetch_log_counts():
-    """Fetch log counts grouped by day from the database."""
-    conn = sqlite3.connect("logs.db")
-    cursor = conn.cursor()
+def plot_log_levels(logs):
+    """Plot bar chart of log levels."""
+    levels = [log[2] for log in logs]  # Assuming 3rd column is log_level
+    counts = Counter(levels)
 
-    cursor.execute("SELECT timestamp FROM logs")
-    timestamps = cursor.fetchall()
-    conn.close()
-
-    # Extract only the dates (YYYY-MM-DD)
-    dates = [ts[0][:10] for ts in timestamps]
-
-    # Count occurrences per day
-    date_counts = Counter(dates)
-    return date_counts
-
-def plot_log_trends():
-    """Visualize log frequency as a bar chart."""
-    date_counts = fetch_log_counts()
-
-    if not date_counts:
-        print("⚠️ No logs found to visualize.")
-        return
-
-    # Sort dates
-    dates = sorted(date_counts.keys())
-    counts = [date_counts[date] for date in dates]
-
-    # Plot
-    plt.figure(figsize=(10, 5))
-    plt.bar(dates, counts, color="skyblue")
-    plt.xlabel("Date")
-    plt.ylabel("Log Count")
-    plt.title("Logs Per Day")
-    plt.xticks(rotation=45)
-    plt.grid(axis="y", linestyle="--", alpha=0.7)
-
-    # Show plot
+    plt.figure(figsize=(8, 5))
+    plt.bar(counts.keys(), counts.values(), color='skyblue')
+    plt.xlabel("Log Levels")
+    plt.ylabel("Count")
+    plt.title("Log Level Frequency")
+    plt.grid(axis='y')
+    plt.tight_layout()
     plt.show()
-
-# Example usage
-if __name__ == "__main__":
-    plot_log_trends()

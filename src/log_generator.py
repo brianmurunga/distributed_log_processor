@@ -6,8 +6,8 @@ from faker import Faker
 fake = Faker()
 LOG_LEVELS = ["INFO", "WARNING", "ERROR", "DEBUG"]
 
-# Function to generate a log entry
-def generate_structured_log():
+# Function to generate a thousand
+def generate_structured_log(num_entries=1000):
     return {
         "timestamp": fake.date_time().strftime("%Y-%m-%d %H:%M:%S"),
         "level": random.choice(LOG_LEVELS),
