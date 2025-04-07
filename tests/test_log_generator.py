@@ -1,8 +1,8 @@
 import unittest
 import sqlite3
 import os
-from src.log_generator import generate_structured_log, save_log_to_db
-from src.database import setup_database
+from logtool.log_generator import generate_structured_log, save_log_to_db
+from logtool.database import setup_database
 
 DB_PATH = "logs.db"
 

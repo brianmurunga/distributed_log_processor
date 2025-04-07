@@ -1,6 +1,6 @@
 import unittest
-from src.query_logs import query_logs
-from src.database import setup_database  # ensures the table is created
+from logtool.query_logs import query_logs
+from logtool.database import setup_database  # ensures the table is created
 
 class TestQueryLogs(unittest.TestCase):
     @classmethod
