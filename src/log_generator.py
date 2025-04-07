@@ -6,8 +6,8 @@ from faker import Faker
 fake = Faker()
 LOG_LEVELS = ["INFO", "WARNING", "ERROR", "DEBUG"]
 
-# Function to generate a thousand
-def generate_structured_log(num_entries=1000):
+def generate_structured_log():
+    """Generate a single fake log entry."""
     return {
         "timestamp": fake.date_time().strftime("%Y-%m-%d %H:%M:%S"),
         "level": random.choice(LOG_LEVELS),
@@ -15,8 +15,8 @@ def generate_structured_log(num_entries=1000):
         "user": fake.user_name()
     }
 
-# Function to insert a log into the database
 def save_log_to_db(log_entry):
+    """Insert a single log entry into the database."""
     try:
         conn = sqlite3.connect("logs.db")
         cursor = conn.cursor()
@@ -30,10 +30,15 @@ def save_log_to_db(log_entry):
     finally:
         conn.close()
 
-
-# Generate and store 5 logs for testing
-if __name__ == "__main__":
-    for _ in range(5):
+def generate_logs(count=5, delay=0):
+    """Generate and insert multiple logs with optional delay."""
+    for i in range(count):
         log = generate_structured_log()
         save_log_to_db(log)
-        print("✅ Log saved:", log)
+        print(f"✅ Log {i + 1}/{count} saved:", log)
+        if delay > 0:
+            time.sleep(delay)
+
+# Manual testing
+if __name__ == "__main__":
+    generate_logs(count=5, delay=0.5)  # delay time to simulate real-time logs

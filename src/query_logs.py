@@ -31,6 +31,28 @@ def fetch_logs_by_date(start_date, end_date):
 
     return logs
 
+def query_logs(start_date, end_date):
+    """Fetch logs within a specific date range."""
+    try:
+        conn = sqlite3.connect("logs.db")
+        cursor = conn.cursor()
+
+        query = """
+            SELECT * FROM logs 
+            WHERE timestamp BETWEEN ? AND ?
+        """
+        cursor.execute(query, (start_date, end_date))
+        logs = cursor.fetchall()
+        return logs
+
+    except sqlite3.DatabaseError as e:
+        print(f"Database error: {e}")
+        return []
+
+    finally:
+        conn.close()
+
+
 # Optional manual test
 if __name__ == "__main__":
     start = "2024-03-25 00:00:00"
