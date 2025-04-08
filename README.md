@@ -1,6 +1,29 @@
-# 🧠 Distributed Log Processor
+# 📜 Distributed Log Viewer
 
-A lightweight distributed log processing system built with Python and SQLite. It supports structured log generation, querying, exporting, and visualization — perfect for learning, prototyping, or extending.
+A lightweight, Flask-based log viewing dashboard for parsing, visualizing, and managing log files from distributed systems. Built for developers, analysts, and sysadmins who need a user-friendly interface to inspect and filter logs without complex tooling.
+!(landing.png)
+![screenshot](screenshot.png)
+
+## 🚀 Features
+
+- 🔍 Filter logs by date and user
+- 📈 Visualize log level frequency using charts
+- 🌙 Dark mode toggle
+- 📁 Upload & parse CSV log files
+- 📊 Paginated & searchable table view
+- ⬇️ Export logs in CSV, JSON, or TXT
+- 🪵 Designed with Bootstrap 5 for responsiveness
+
+---
+
+## 📦 Getting Started
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/yourusername/distributed-log-viewer.git
+cd distributed-log-viewer
+
 
 ## 📁 Project Structure
 

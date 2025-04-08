@@ -40,30 +40,32 @@
       </button>
     </div>
 
-    <form method="POST" class="row g-3 mb-4">
-      <div class="col-md-3">
-        <label for="start_date" class="form-label">Start Date</label>
-        <input type="date" id="start_date" name="start_date" class="form-control" max="{{ today }}" value="{{ start if start else '' }}">
-      </div>
-      <div class="col-md-3">
-        <label for="end_date" class="form-label">End Date</label>
-        <input type="date" id="end_date" name="end_date" class="form-control" max="{{ today }}" value="{{ end if end else '' }}">
-      </div>
-      <div class="col-md-3">
-        <label for="user_filter" class="form-label">User</label>
-        <select id="user_filter" name="user_filter" class="form-select">
-          <option value="">All Users</option>
-          {% for user in users %}
-          <option value="{{ user }}" {% if user_filter == user %}selected{% endif %}>{{ user }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-3 d-flex align-items-end">
-        <button type="submit" class="btn btn-primary me-2">🔍 Filter Logs</button>
-        <a href="/all" class="btn btn-secondary">📋 Show All</a>
+    <form id="filterForm" class="row g-3 mb-4">
+      <!-- form inputs -->
+      <div class="col-md-4 d-flex align-items-end">
+        <button type="button" onclick="submitFilter()" class="btn btn-primary me-2">🔍 Filter Logs</button>
+        <a href="/all" class="btn btn-secondary">📋 Show All Logs</a>
       </div>
     </form>
-
+    
+    <script>
+    function submitFilter() {
+      const form = document.getElementById('filterForm');
+      const formData = new FormData(form);
+      
+      // Create a POST request manually
+      fetch('/', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (response.redirected) {
+          window.location.href = response.url;
+        }
+      });
+    }
+    </script>
+    
     {% if logs %}
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div>
