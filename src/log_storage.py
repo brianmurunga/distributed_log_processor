@@ -20,7 +20,7 @@ def create_table():
     conn.close()
 
 def store_log(log_entry):
-    """Stores a log entry into the database"""
+    """log entry into the database"""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
