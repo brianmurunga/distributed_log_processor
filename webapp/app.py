@@ -1,20 +1,20 @@
-from flask import Flask, render_template, request, send_file, jsonify
+from flask import Flask, render_template, request, redirect, send_file, flash
 import sqlite3
 from datetime import datetime, date
 import csv
 import io
 import json
+import os
 
 app = Flask(__name__)
+app.secret_key = "supersecretkey"  # Needed for flashing messages
 DATABASE = "logs.db"
 
 def get_unique_users():
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT user FROM logs WHERE user IS NOT NULL ORDER BY user")
-    users = [row[0] for row in cursor.fetchall()]
-    conn.close()
-    return users
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT user FROM logs WHERE user IS NOT NULL ORDER BY user")
+        return [row[0] for row in cursor.fetchall()]
 
 def get_log_level_counts(logs):
     level_counts = {}
@@ -53,39 +53,80 @@ def index():
 
         query += " ORDER BY timestamp DESC"
 
-        conn = sqlite3.connect(DATABASE)
-        cursor = conn.cursor()
-        cursor.execute(query, params)
-        logs = cursor.fetchall()
-        conn.close()
+        with sqlite3.connect(DATABASE) as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, params)
+            logs = cursor.fetchall()
 
-    return render_template("index.html", 
-                         logs=logs, 
-                         start=start, 
-                         end=end,
-                         user_filter=user_filter,
-                         users=users,
-                         log_levels=list(get_log_level_counts(logs).keys()) if logs else [],
-                         log_counts=list(get_log_level_counts(logs).values()) if logs else [],
-                         today=date.today().isoformat())
-
-@app.route("/all")
-def show_all_logs():
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM logs ORDER BY timestamp DESC")
-    logs = cursor.fetchall()
-    conn.close()
-    
     return render_template("index.html",
-                         logs=logs,
-                         start=None,
-                         end=None,
-                         user_filter=None,
-                         users=get_unique_users(),
-                         log_levels=list(get_log_level_counts(logs).keys()),
-                         log_counts=list(get_log_level_counts(logs).values()),
-                         today=date.today().isoformat())
+                           logs=logs,
+                           start=start,
+                           end=end,
+                           user_filter=user_filter,
+                           users=users,
+                           log_levels=list(get_log_level_counts(logs).keys()) if logs else [],
+                           log_counts=list(get_log_level_counts(logs).values()) if logs else [],
+                           today=date.today().isoformat())
+
+@app.route("/all", methods=["GET"])
+def show_all_logs():
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM logs ORDER BY timestamp DESC")
+        logs = cursor.fetchall()
+
+    return render_template("index.html",
+                           logs=logs,
+                           start=None,
+                           end=None,
+                           user_filter=None,
+                           users=get_unique_users(),
+                           log_levels=list(get_log_level_counts(logs).keys()),
+                           log_counts=list(get_log_level_counts(logs).values()),
+                           today=date.today().isoformat())
+
+@app.route("/upload", methods=["GET", "POST"])
+def upload_logs():
+    if request.method == "POST":
+        file = request.files.get("file")
+        if file and file.filename.endswith(".csv"):
+            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+            csv_input = csv.reader(stream)
+            next(csv_input, None)  # Skip header
+
+            with sqlite3.connect(DATABASE) as conn:
+                cursor = conn.cursor()
+                for row in csv_input:
+                    if len(row) >= 5:
+                        cursor.execute("INSERT INTO logs (id, timestamp, level, message, user) VALUES (?, ?, ?, ?, ?)", row[:5])
+                conn.commit()
+            flash("Logs uploaded successfully!", "success")
+            return redirect("/")
+        else:
+            flash("Please upload a valid CSV file.", "danger")
+            return redirect("/upload")
+    return '''
+    <!DOCTYPE html>
+    <html lang="en" data-bs-theme="dark">
+    <head>
+        <meta charset="UTF-8">
+        <title>Upload Logs</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body class="p-5 bg-dark text-white">
+        <h2>📤 Upload Logs</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="file" class="form-label">Select CSV File</label>
+                <input class="form-control" type="file" name="file" accept=".csv" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+            <a href="/" class="btn btn-secondary">Back</a>
+        </form>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+    </html>
+    '''
 
 @app.route("/export", methods=["POST"])
 def export_logs():
@@ -113,45 +154,40 @@ def export_logs():
 
     query += " ORDER BY timestamp DESC"
 
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    cursor.execute(query, params)
-    logs = cursor.fetchall()
-    conn.close()
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        cursor.execute(query, params)
+        logs = cursor.fetchall()
+
+    filename = f"logs_{start or 'all'}_to_{end or 'all'}"
 
     if format == "json":
         output = io.StringIO()
         json.dump([dict(zip(['id', 'timestamp', 'level', 'message', 'user'], row)) for row in logs], output)
         output.seek(0)
-        return send_file(
-            io.BytesIO(output.read().encode("utf-8")),
-            mimetype="application/json",
-            as_attachment=True,
-            download_name=f"logs_{start or 'all'}_to_{end or 'all'}.json"
-        )
+        return send_file(io.BytesIO(output.read().encode("utf-8")),
+                         mimetype="application/json",
+                         as_attachment=True,
+                         download_name=f"{filename}.json")
     elif format == "txt":
         output = io.StringIO()
         for log in logs:
             output.write(f"{log[0]}\t{log[1]}\t{log[2]}\t{log[3]}\t{log[4]}\n")
         output.seek(0)
-        return send_file(
-            io.BytesIO(output.read().encode("utf-8")),
-            mimetype="text/plain",
-            as_attachment=True,
-            download_name=f"logs_{start or 'all'}_to_{end or 'all'}.txt"
-        )
-    else:  # CSV (default)
+        return send_file(io.BytesIO(output.read().encode("utf-8")),
+                         mimetype="text/plain",
+                         as_attachment=True,
+                         download_name=f"{filename}.txt")
+    else:  # default to CSV
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow(["ID", "Timestamp", "Level", "Message", "User"])
         writer.writerows(logs)
         output.seek(0)
-        return send_file(
-            io.BytesIO(output.read().encode("utf-8")),
-            mimetype="text/csv",
-            as_attachment=True,
-            download_name=f"logs_{start or 'all'}_to_{end or 'all'}.csv"
-        )
+        return send_file(io.BytesIO(output.read().encode("utf-8")),
+                         mimetype="text/csv",
+                         as_attachment=True,
+                         download_name=f"{filename}.csv")
 
 if __name__ == "__main__":
     app.run(debug=True)

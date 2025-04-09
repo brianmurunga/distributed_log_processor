@@ -29,43 +29,74 @@
       background-color: #2d2d2d;
       border-color: #444;
     }
+    .upload-btn {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+    }
+    .upload-btn input[type="file"] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body class="bg-light">
   <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2>📜 Distributed Log Viewer</h2>
-      <button id="darkModeToggle" class="btn btn-sm btn-outline-secondary">
-        🌙 Dark Mode
-      </button>
+      <div>
+        <button id="darkModeToggle" class="btn btn-sm btn-outline-secondary me-2">
+          🌙 Dark Mode
+        </button>
+        <a href="/upload" class="btn btn-sm btn-success">📤 Upload Logs</a>
+      </div>
     </div>
 
-    <form id="filterForm" class="row g-3 mb-4">
-      <!-- form inputs -->
-      <div class="col-md-4 d-flex align-items-end">
-        <button type="button" onclick="submitFilter()" class="btn btn-primary me-2">🔍 Filter Logs</button>
-        <a href="/all" class="btn btn-secondary">📋 Show All Logs</a>
+    <form method="POST" class="row g-3 mb-4">
+      <div class="col-md-3">
+        <label for="start_date" class="form-label">Start Date</label>
+        <input type="date" id="start_date" name="start_date" class="form-control" 
+               max="{{ today }}" value="{{ start if start else '' }}" onchange="validateDates()">
+      </div>
+      <div class="col-md-3">
+        <label for="end_date" class="form-label">End Date</label>
+        <input type="date" id="end_date" name="end_date" class="form-control" 
+               max="{{ today }}" value="{{ end if end else '' }}" onchange="validateDates()">
+      </div>
+      <div class="col-md-3">
+        <label for="user_filter" class="form-label">User</label>
+        <select id="user_filter" name="user_filter" class="form-select">
+          <option value="">All Users</option>
+          {% for user in users %}
+          <option value="{{ user }}" {% if user_filter == user %}selected{% endif %}>{{ user }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary me-2">🔍 Filter Logs</button>
+        <a href="/all" class="btn btn-secondary">📋 Show All</a>
       </div>
     </form>
-    
-    <script>
-    function submitFilter() {
-      const form = document.getElementById('filterForm');
-      const formData = new FormData(form);
-      
-      // Create a POST request manually
-      fetch('/', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => {
-        if (response.redirected) {
-          window.location.href = response.url;
-        }
-      });
-    }
-    </script>
-    
+
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ error }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    {% if uploaded %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      Logs uploaded successfully! Showing uploaded logs.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
     {% if logs %}
     <div class="d-flex justify-content-between align-items-center mb-3">
       <div>
@@ -117,6 +148,8 @@
             <li><a class="dropdown-item" href="#" onclick="exportData('csv')">CSV Format</a></li>
             <li><a class="dropdown-item" href="#" onclick="exportData('json')">JSON Format</a></li>
             <li><a class="dropdown-item" href="#" onclick="exportData('txt')">Text Format</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="/upload">📤 Upload New Logs</a></li>
           </ul>
         </div>
       </div>

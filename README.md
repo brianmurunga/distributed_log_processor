@@ -1,7 +1,8 @@
 # 📜 Distributed Log Viewer
 
 A lightweight, Flask-based log viewing dashboard for parsing, visualizing, and managing log files from distributed systems. Built for developers, analysts, and sysadmins who need a user-friendly interface to inspect and filter logs without complex tooling.
-!(landing.png)
+![Alt text](tests/screenshots/landing.png) Landing page
+![Alt text](tests/screenshots/chart.png) chart page
 ![screenshot](screenshot.png)
 
 ## 🚀 Features
