@@ -3,14 +3,14 @@
 A lightweight, Flask-based log viewing dashboard for parsing, visualizing, and managing log files from distributed systems. Built for developers, analysts, and sysadmins who need a user-friendly interface to inspect and filter logs without complex tooling.
 ![Alt text](tests/screenshots/landing.png) Landing page
 ![Alt text](tests/screenshots/chart.png) chart page
-![screenshot](screenshot.png)
+![screenshot](tests/screenshots/show%20all.png)
 
 ## 🚀 Features
 
 - 🔍 Filter logs by date and user
 - 📈 Visualize log level frequency using charts
 - 🌙 Dark mode toggle
-- 📁 Upload & parse CSV log files
+- 📁 Upload & parse CSV log files--still work in progress
 - 📊 Paginated & searchable table view
 - ⬇️ Export logs in CSV, JSON, or TXT
 - 🪵 Designed with Bootstrap 5 for responsiveness
@@ -22,7 +22,7 @@ A lightweight, Flask-based log viewing dashboard for parsing, visualizing, and m
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/yourusername/distributed-log-viewer.git
+git clone https://github.com/brianmurunga/distributed_log_processor.git
 cd distributed-log-viewer
 
 
